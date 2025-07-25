@@ -40,6 +40,14 @@ Before using the script, **you must create a shortcut in Snapchat (on your phone
    - `R` → Recalibrate
    - `ESC` → Exit
 
+## 🎨 ASCII Theme
+
+Choose the visual style of the snap counter display.
+
+In the script, modify this line:
+```python
+ascii_theme = "block"  # or "minimal"
+
 ## ⚠️ Disclaimer
 
 This script is intended **for educational purposes only**.  

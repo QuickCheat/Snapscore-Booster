@@ -1,4 +1,5 @@
 import pyautogui, keyboard, json, time, os, threading
+from datetime import datetime
 
 pyautogui.FAILSAFE = False
 POSITIONS_FILE = "positions.json"
@@ -7,11 +8,13 @@ paused = False
 should_exit = False
 positions = {}
 sent = 0
+start_time = None
+ascii_theme = "block"  # Change to "minimal" if you prefer
 
-click_delay = 0.30     # small delay between clicks / 0.30 recommended
-snap_delay = 0.30       # small delay between each full snap sequence / 0.30 recommended
+click_delay = 0.30     # Recommended delay between clicks
+snap_delay = 0.30      # Recommended delay between full snap sequence
 
-ascii_digits = {
+ascii_digits_block = {
     '0': [" ███ ", "█   █", "█   █", "█   █", " ███ "],
     '1': ["  █  ", " ██  ", "  █  ", "  █  ", " ███ "],
     '2': [" ███ ", "    █", " ███ ", "█    ", "█████"],
@@ -22,6 +25,19 @@ ascii_digits = {
     '7': ["█████", "    █", "   █ ", "  █  ", "  █  "],
     '8': [" ███ ", "█   █", " ███ ", "█   █", " ███ "],
     '9': [" ███ ", "█   █", " ████", "    █", " ███ "]
+}
+
+ascii_digits_minimal = {
+    '0': [" __ ", "|  |", "|  |", "|__|"],
+    '1': ["  | ", "  | ", "  | ", "  | "],
+    '2': [" __ ", " __|", "|__ ", "    "],
+    '3': [" __ ", " __|", " __|", "    "],
+    '4': ["|__|", "   |", "   |", "    "],
+    '5': ["|__ ", " __|", " __|", "    "],
+    '6': [" __ ", "|__ ", "|__|", "    "],
+    '7': ["___ ", "  / ", " /  ", "    "],
+    '8': [" __ ", "|__|", "|__|", "    "],
+    '9': [" __ ", "|__|", " __|", "    "]
 }
 
 def save_positions(pos_dict):
@@ -70,11 +86,11 @@ def send_snap(pos):
 
 def draw_ascii_counter(number):
     os.system("cls" if os.name == "nt" else "clear")
-    str_num = str(number)
-    lines = [""] * 5
-    for digit in str_num:
-        for i in range(5):
-            lines[i] += ascii_digits[digit][i] + "  "
+    digits = ascii_digits_block if ascii_theme == "block" else ascii_digits_minimal
+    lines = [""] * len(next(iter(digits.values())))
+    for digit in str(number):
+        for i in range(len(lines)):
+            lines[i] += digits[digit][i] + "  "
     border = "╭" + "─" * 44 + "╮"
     print(border)
     print("│           📸  SNAPS SENT            │")
@@ -82,6 +98,15 @@ def draw_ascii_counter(number):
     for line in lines:
         print("     " + line)
     print("\n[CTRL+Q] Pause  |  [F] Resume  |  [R] Recalibrate  |  [ESC] Exit")
+
+def show_stats():
+    elapsed = (datetime.now() - start_time).total_seconds()
+    minutes = elapsed / 60 if elapsed > 0 else 1
+    spm = sent / minutes
+    print("\n📊 Session Stats:")
+    print(f"   Time Elapsed: {int(elapsed)} seconds")
+    print(f"   Total Snaps Sent: {sent}")
+    print(f"   Average Snaps/Minute: {spm:.2f}")
 
 def listen_hotkeys():
     keyboard.add_hotkey('ctrl+q', pause)
@@ -130,7 +155,7 @@ def wait_for_start():
     time.sleep(0.5)
 
 def main():
-    global paused, should_exit, positions, sent
+    global paused, should_exit, positions, sent, start_time
 
     positions = load_positions()
     if not positions:
@@ -139,6 +164,7 @@ def main():
     threading.Thread(target=listen_hotkeys, daemon=True).start()
 
     wait_for_start()
+    start_time = datetime.now()
 
     try:
         while True:
@@ -154,6 +180,7 @@ def main():
     except KeyboardInterrupt:
         pass
 
+    show_stats()
     print(f"\n✅ Script ended. Total snaps sent: {sent}.")
 
 if __name__ == "__main__":
